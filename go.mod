@@ -10,5 +10,5 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/rtree v1.3.1 // indirect
 	github.com/tidwall/sjson v1.2.4 // indirect
-	github.com/uber/h3-go v3.0.1+incompatible // indirect
+	github.com/uber/h3-go/v3 v3.7.1 // indirect
 )

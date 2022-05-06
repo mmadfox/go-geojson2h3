@@ -1,3 +1,7 @@
+github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
+github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/tidwall/cities v0.1.0/go.mod h1:lV/HDp2gCcRcHJWqgt6Di54GiDrTZwh1aG2ZUPNbqa4=
 github.com/tidwall/geoindex v1.4.4 h1:hdwzy5qNtK75i7nus59Ibr+SwcH4F2v65bw4txrLJ9M=
 github.com/tidwall/geoindex v1.4.4/go.mod h1:rvVVNEFfkJVWGUdEfU8QaoOg/9zFX0h9ofWzA60mz1I=
@@ -16,3 +20,7 @@ github.com/tidwall/sjson v1.2.4 h1:cuiLzLnaMeBhRmEv00Lpk3tkYrcxpmbU81tAY4Dw0tc=
 github.com/tidwall/sjson v1.2.4/go.mod h1:098SZ494YoMWPmMO6ct4dcFnqxwj9r/gF0Etp19pSNM=
 github.com/uber/h3-go v3.0.1+incompatible h1:RVpBm8qd7mM94YuIhNQfCXpVj6mPY6gNsVstDg1FvjY=
 github.com/uber/h3-go v3.0.1+incompatible/go.mod h1:66a2M4rQlf+dtkTWj3bHoLFgDT/Rt4kLT8dMuEQVQvw=
+github.com/uber/h3-go/v3 v3.7.1 h1:qGAnkRKXHeuaGuLDktcouROiNDE1PgZTgiZGMBwVnSc=
+github.com/uber/h3-go/v3 v3.7.1/go.mod h1:XS+EMzW0EmjL/aioQsvLIYJRtC7/lodai5l8SNmlYIs=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
