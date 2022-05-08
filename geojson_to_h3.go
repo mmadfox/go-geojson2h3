@@ -18,6 +18,7 @@ func ToH3(resolution int, o geojson.Object) (indexes []h3.H3Index, err error) {
 		return nil, fmt.Errorf("got invalid resolution %d. expected from 0 to 15",
 			resolution)
 	}
+
 	switch typ := o.(type) {
 	case *geojson.MultiPoint:
 		set := make([][]h3.H3Index, 0)
@@ -54,6 +55,24 @@ func ToH3(resolution int, o geojson.Object) (indexes []h3.H3Index, err error) {
 			return nil, err
 		}
 		indexes = deDup([][]h3.H3Index{indexes})
+	case *geojson.Polygon:
+		indexes, err = polygonToH3(resolution, typ)
+	case *geojson.MultiPolygon:
+		set := make([][]h3.H3Index, 0)
+		typ.ForEach(func(geom geojson.Object) bool {
+			polygon, ok := geom.(*geojson.Polygon)
+			if !ok {
+				return false
+			}
+			indexes, err = polygonToH3(resolution, polygon)
+			if err != nil {
+				return false
+			}
+			return true
+		})
+		indexes = deDup(set)
+	default:
+		err = fmt.Errorf("unknown GeoJSON object")
 	}
 	return
 }
@@ -64,6 +83,37 @@ func pointToH3(resolution int, point *geojson.Point) []h3.H3Index {
 		Longitude: point.Center().X,
 	}, resolution)
 	return []h3.H3Index{index}
+}
+
+func polygonToH3(resolution int, polygon *geojson.Polygon) ([]h3.H3Index, error) {
+	poly := h3.GeoPolygon{}
+	poly.Geofence = make([]h3.GeoCoord, 0, polygon.NumPoints())
+	numHoles := len(polygon.Base().Holes)
+	if numHoles > 0 {
+		poly.Holes = make([][]h3.GeoCoord, numHoles)
+		for i := 0; i < numHoles; i++ {
+			hole := polygon.Base().Holes[i]
+			for j := 0; j < hole.NumPoints(); j++ {
+				point := hole.PointAt(j)
+				poly.Holes[i] = append(poly.Holes[i], h3.GeoCoord{
+					Latitude:  point.Y,
+					Longitude: point.X,
+				})
+			}
+		}
+	}
+	for i := 0; i < polygon.Base().Exterior.NumPoints(); i++ {
+		point := polygon.Base().Exterior.PointAt(i)
+		poly.Geofence = append(poly.Geofence, h3.GeoCoord{
+			Latitude:  point.Y,
+			Longitude: point.X,
+		})
+	}
+	indexes := h3.Polyfill(poly, resolution)
+	if len(indexes) == 0 {
+		indexes = pointToH3(resolution, geojson.NewPoint(polygon.Center()))
+	}
+	return indexes, nil
 }
 
 func lineStringToH3(resolution int, lineString *geojson.LineString) ([]h3.H3Index, error) {

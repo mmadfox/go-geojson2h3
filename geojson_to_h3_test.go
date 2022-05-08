@@ -13,7 +13,97 @@ import (
 	"github.com/uber/h3-go/v3"
 )
 
-var debug bool = true
+var debug bool = false
+
+func init() {
+	if debug {
+		_ = os.Mkdir("tmp", 0755)
+	}
+}
+
+func TestPolygonS1ToH3(t *testing.T) {
+	res := 7
+	points := strToPoints(`
+[-73.932043, 40.731168],
+[-73.888112, 40.67702],
+[-73.812604, 40.757185],
+[-73.844867, 40.797232],
+[-73.846239, 40.764468],
+[-73.870951, 40.749381],
+[-73.87301, 40.776431],
+[-73.895662, 40.773831],
+[-73.893603, 40.758746],
+[-73.870951, 40.735331],
+[-73.891544, 40.739495],
+[-73.864087, 40.724402],
+[-73.892917, 40.708265],
+[-73.908018, 40.742617],
+[-73.932043, 40.731168]
+`)
+	polygon := geojson.NewPolygon(geometry.NewPoly(points, nil, nil))
+	indexes, err := ToH3(res, polygon)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if debug {
+		filename := fmt.Sprintf("tmp/polygon.s1.res:%d.json", res)
+		writeIndexesToFile(t, filename, indexes)
+	}
+
+	if want, have := 10, len(indexes); want != have {
+		t.Fatalf("resolution: %d, have %d, want %d", res, have, want)
+	}
+}
+
+func TestPolygonWithHoleS1ToH3(t *testing.T) {
+	res := 9
+	points := strToPoints(`
+[-73.932043, 40.731168],
+[-73.888112, 40.67702],
+[-73.812604, 40.757185],
+[-73.844867, 40.797232],
+[-73.846239, 40.764468],
+[-73.870951, 40.749381],
+[-73.87301, 40.776431],
+[-73.895662, 40.773831],
+[-73.893603, 40.758746],
+[-73.870951, 40.735331],
+[-73.891544, 40.739495],
+[-73.864087, 40.724402],
+[-73.892917, 40.708265],
+[-73.908018, 40.742617],
+[-73.932043, 40.731168]
+`)
+
+	hole := strToPoints(`
+[-73.87201, 40.745115],
+[-73.864717, 40.750058],
+[-73.847899, 40.738221],
+[-73.840949, 40.743815],
+[-73.8485, 40.749538],
+[-73.845411, 40.752595],
+[-73.837088, 40.747392],
+[-73.828079, 40.757147],
+[-73.822416, 40.750514],
+[-73.848757, 40.726251],
+[-73.87201, 40.745115]
+`)
+	polygon := geojson.NewPolygon(geometry.NewPoly(points, [][]geometry.Point{hole}, nil))
+	indexes, err := ToH3(res, polygon)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if debug {
+		filename := fmt.Sprintf("tmp/polygon_with_hole.s1.res:%d.json", res)
+		writeIndexesToFile(t, filename, indexes)
+	}
+
+	if want, have := 377, len(indexes); want != have {
+		t.Fatalf("resolution: %d, have %d, want %d", res, have, want)
+	}
+}
 
 func TestPointToH3(t *testing.T) {
 	point := geojson.NewPoint(geometry.Point{
@@ -159,10 +249,6 @@ func TestLineStringS1ToH3(t *testing.T) {
 			res:  16,
 			err:  true,
 		},
-	}
-
-	if debug {
-		_ = os.Mkdir("tmp", 0755)
 	}
 
 	for _, tc := range testCases {
