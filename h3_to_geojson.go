@@ -9,6 +9,8 @@ import (
 	"github.com/uber/h3-go/v3"
 )
 
+// ToFeatureCollection converts a set of hexagons to a GeoJSON `FeatureCollection`
+// with the set outline(s). The feature's geometry type will be `Polygon`.
 func ToFeatureCollection(indexes []h3.H3Index) (*geojson.FeatureCollection, error) {
 	if len(indexes) == 0 {
 		return nil, fmt.Errorf("uber h3 indexes are empty")

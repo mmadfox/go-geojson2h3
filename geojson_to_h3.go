@@ -10,6 +10,18 @@ import (
 	"github.com/uber/h3-go/v3"
 )
 
+// ToH3 converts a GeoJSON objects to a list of hexagons with specified resolution.
+//
+// Known list of objects:
+//  - Point, MultiPoint
+//  - Line, MultiLine
+//  - Polygon, MultiPolygon
+//  - GeometryCollection
+//  - Feature, FeatureCollection
+//
+// Note that conversion from GeoJSON
+// * is lossy; the resulting hexagon set only approximately describes the original
+// * shape, at a level of precision determined by the hexagon resolution.
 func ToH3(resolution int, o geojson.Object) (indexes []h3.H3Index, err error) {
 	if o == nil {
 		return nil, fmt.Errorf("geojson.Object is nil")
@@ -19,6 +31,43 @@ func ToH3(resolution int, o geojson.Object) (indexes []h3.H3Index, err error) {
 			resolution)
 	}
 
+	switch typ := o.(type) {
+	case *geojson.FeatureCollection:
+		set := make([][]h3.H3Index, 0)
+		typ.ForEach(func(geom geojson.Object) bool {
+			feature, ok := geom.(*geojson.Feature)
+			if !ok {
+				err = fmt.Errorf("GeoJSON invalid format")
+				return false
+			}
+			indexes, err = polyfill(resolution, feature.Base())
+			if err != nil {
+				return false
+			}
+			set = append(set, indexes)
+			return true
+		})
+		indexes = deDup(set)
+	case *geojson.GeometryCollection:
+		set := make([][]h3.H3Index, 0)
+		typ.ForEach(func(geom geojson.Object) bool {
+			indexes, err = polyfill(resolution, geom)
+			if err != nil {
+				return false
+			}
+			set = append(set, indexes)
+			return true
+		})
+		indexes = deDup(set)
+	case *geojson.Feature:
+		indexes, err = polyfill(resolution, typ.Base())
+	default:
+		indexes, err = polyfill(resolution, o)
+	}
+	return
+}
+
+func polyfill(resolution int, o geojson.Object) (indexes []h3.H3Index, err error) {
 	switch typ := o.(type) {
 	case *geojson.MultiPoint:
 		set := make([][]h3.H3Index, 0)
@@ -68,6 +117,7 @@ func ToH3(resolution int, o geojson.Object) (indexes []h3.H3Index, err error) {
 			if err != nil {
 				return false
 			}
+			set = append(set, indexes)
 			return true
 		})
 		indexes = deDup(set)

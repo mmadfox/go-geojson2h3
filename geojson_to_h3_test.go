@@ -21,6 +21,117 @@ func init() {
 	}
 }
 
+func TestGeometryCollectionS1ToH3(t *testing.T) {
+	res := 7
+	points := []geometry.Point{
+		{X: -74.143609, Y: 40.751389},
+		{X: -73.923951, Y: 40.547124},
+		{X: -73.737928, Y: 40.75451},
+		{X: -73.902672, Y: 40.764915},
+		{X: -74.10311, Y: 40.603463},
+	}
+	objects := make([]geojson.Object, len(points))
+	for i := 0; i < len(points); i++ {
+		point := geojson.NewPoint(points[i])
+		objects[i] = point
+	}
+	collection := geojson.NewGeometryCollection(objects)
+	indexes, err := ToH3(res, collection)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want, have := len(points), len(indexes); want != have {
+		t.Fatalf("resolution: %d, have %d, want %d", res, have, want)
+	}
+}
+
+func TestGeometryCollectionS2ToH3(t *testing.T) {
+	res := 7
+	points := []geometry.Point{
+		{X: -74.143609, Y: 40.751389},
+		{X: -73.923951, Y: 40.547124},
+		{X: -73.737928, Y: 40.75451},
+		{X: -73.902672, Y: 40.764915},
+		{X: -74.10311, Y: 40.603463},
+	}
+	objects := make([]geojson.Object, 0, len(points)+1)
+	for i := 0; i < len(points); i++ {
+		point := geojson.NewPoint(points[i])
+		objects = append(objects, point)
+	}
+	collection1 := geojson.NewGeometryCollection(objects)
+	objects = append(objects, collection1)
+	collection2 := geojson.NewGeometryCollection(objects)
+	indexes, err := ToH3(res, collection2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want, have := len(points), len(indexes); want != have {
+		t.Fatalf("resolution: %d, have %d, want %d", res, have, want)
+	}
+}
+
+func TestFeatureCollectionS1ToH3(t *testing.T) {
+	res := 7
+	points := []geometry.Point{
+		{X: -74.143609, Y: 40.751389},
+		{X: -73.923951, Y: 40.547124},
+		{X: -73.737928, Y: 40.75451},
+		{X: -73.902672, Y: 40.764915},
+		{X: -74.10311, Y: 40.603463},
+	}
+	objects := make([]geojson.Object, 0, len(points)+1)
+	for i := 0; i < len(points); i++ {
+		point := geojson.NewPoint(points[i])
+		feature := geojson.NewFeature(point, "")
+		objects = append(objects, feature)
+	}
+	featureCollection := geojson.NewFeatureCollection(objects)
+	indexes, err := ToH3(res, featureCollection)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want, have := len(points), len(indexes); want != have {
+		t.Fatalf("resolution: %d, have %d, want %d", res, have, want)
+	}
+}
+
+func TestFeaturePolygonS1ToH3(t *testing.T) {
+	res := 7
+	points := strToPoints(`
+[-73.932043, 40.731168],
+[-73.888112, 40.67702],
+[-73.812604, 40.757185],
+[-73.844867, 40.797232],
+[-73.846239, 40.764468],
+[-73.870951, 40.749381],
+[-73.87301, 40.776431],
+[-73.895662, 40.773831],
+[-73.893603, 40.758746],
+[-73.870951, 40.735331],
+[-73.891544, 40.739495],
+[-73.864087, 40.724402],
+[-73.892917, 40.708265],
+[-73.908018, 40.742617],
+[-73.932043, 40.731168]
+`)
+	polygon := geojson.NewPolygon(geometry.NewPoly(points, nil, nil))
+	feature := geojson.NewFeature(polygon, "test")
+	indexes, err := ToH3(res, feature)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if debug {
+		filename := fmt.Sprintf("tmp/feature_polygon.s1.res:%d.json", res)
+		writeIndexesToFile(t, filename, indexes)
+	}
+
+	if want, have := 10, len(indexes); want != have {
+		t.Fatalf("resolution: %d, have %d, want %d", res, have, want)
+	}
+}
+
 func TestPolygonS1ToH3(t *testing.T) {
 	res := 7
 	points := strToPoints(`
@@ -49,6 +160,39 @@ func TestPolygonS1ToH3(t *testing.T) {
 	if debug {
 		filename := fmt.Sprintf("tmp/polygon.s1.res:%d.json", res)
 		writeIndexesToFile(t, filename, indexes)
+	}
+
+	if want, have := 10, len(indexes); want != have {
+		t.Fatalf("resolution: %d, have %d, want %d", res, have, want)
+	}
+}
+
+func TestMultiPolygonToH3(t *testing.T) {
+	res := 7
+	points := strToPoints(`
+[-73.932043, 40.731168],
+[-73.888112, 40.67702],
+[-73.812604, 40.757185],
+[-73.844867, 40.797232],
+[-73.846239, 40.764468],
+[-73.870951, 40.749381],
+[-73.87301, 40.776431],
+[-73.895662, 40.773831],
+[-73.893603, 40.758746],
+[-73.870951, 40.735331],
+[-73.891544, 40.739495],
+[-73.864087, 40.724402],
+[-73.892917, 40.708265],
+[-73.908018, 40.742617],
+[-73.932043, 40.731168]
+`)
+	multiPolygon := geojson.NewMultiPolygon([]*geometry.Poly{
+		geometry.NewPoly(points, nil, nil),
+		geometry.NewPoly(points, nil, nil),
+	})
+	indexes, err := ToH3(res, multiPolygon)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	if want, have := 10, len(indexes); want != have {
@@ -410,6 +554,33 @@ func TestLineStringS2ToH3(t *testing.T) {
 				t.Fatalf("have %d, want %d", have, want)
 			}
 		})
+	}
+}
+
+func TestMultiLineStringS1ToH3(t *testing.T) {
+	points := strToPoints(`
+[-74.010794, 40.729827],
+[-73.932541, 40.67698],
+[-73.914179, 40.735812],
+[-73.927221, 40.717725],
+[-73.938375, 40.742186],
+[-73.937689, 40.725663],
+[-73.949015, 40.734771],
+[-73.942494, 40.705361],
+[-73.955879, 40.716424],
+[-73.96017, 40.740885],
+[-73.995349, 40.745178]
+`)
+
+	line1 := geometry.NewLine(points, nil)
+	line2 := geometry.NewLine(points, nil)
+	multiLine := geojson.NewMultiLineString([]*geometry.Line{line1, line2})
+	indexes, err := ToH3(10, multiLine)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if have, want := len(indexes), 306; have != want {
+		t.Fatalf("have %d, want %d", have, want)
 	}
 }
 
