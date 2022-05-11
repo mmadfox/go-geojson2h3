@@ -66,6 +66,11 @@ func main() {
 			res: 8,
 			fn:  circleToH3,
 		},
+		{
+			typ: "Rect",
+			res: 4,
+			fn:  rectToH3,
+		},
 	}
 	for _, example := range examples {
 		fmt.Printf("GeoJSON: %s\n", example.typ)
