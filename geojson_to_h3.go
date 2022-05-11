@@ -19,6 +19,9 @@ import (
 //  - GeometryCollection
 //  - Feature, FeatureCollection
 //
+// Extended GeoJSON library:
+//  - Rect, Circle, SimplePoint
+//
 // Note that conversion from GeoJSON
 // * is lossy; the resulting hexagon set only approximately describes the original
 // * shape, at a level of precision determined by the hexagon resolution.
@@ -37,7 +40,7 @@ func ToH3(resolution int, o geojson.Object) (indexes []h3.H3Index, err error) {
 		typ.ForEach(func(geom geojson.Object) bool {
 			feature, ok := geom.(*geojson.Feature)
 			if !ok {
-				err = fmt.Errorf("GeoJSON invalid format")
+				err = fmt.Errorf("GeoJSON invalid format. expected geojson.Feature, got %T", geom)
 				return false
 			}
 			indexes, err = polyfill(resolution, feature.Base())
@@ -81,8 +84,14 @@ func polyfill(resolution int, o geojson.Object) (indexes []h3.H3Index, err error
 			return true
 		})
 		indexes = deDup(set)
+	case *geojson.Rect:
+		return rectToH3(resolution, typ), nil
+	case *geojson.SimplePoint:
+		return simplePointToH3(resolution, typ), nil
 	case *geojson.Point:
 		return pointToH3(resolution, typ), nil
+	case *geojson.Circle:
+		return circleToH3(resolution, typ)
 	case *geojson.MultiLineString:
 		set := make([][]h3.H3Index, 0)
 		typ.ForEach(func(geom geojson.Object) bool {
@@ -133,6 +142,52 @@ func pointToH3(resolution int, point *geojson.Point) []h3.H3Index {
 		Longitude: point.Center().X,
 	}, resolution)
 	return []h3.H3Index{index}
+}
+
+func simplePointToH3(resolution int, point *geojson.SimplePoint) []h3.H3Index {
+	index := h3.FromGeo(h3.GeoCoord{
+		Latitude:  point.Center().Y,
+		Longitude: point.Center().X,
+	}, resolution)
+	return []h3.H3Index{index}
+}
+
+func rectToH3(resolution int, rect *geojson.Rect) []h3.H3Index {
+	poly := h3.GeoPolygon{}
+	poly.Geofence = make([]h3.GeoCoord, 0, rect.NumPoints())
+	for i := 0; i < rect.Base().NumPoints(); i++ {
+		point := rect.Base().PointAt(i)
+		poly.Geofence = append(poly.Geofence, h3.GeoCoord{
+			Latitude:  point.Y,
+			Longitude: point.X,
+		})
+	}
+	indexes := h3.Polyfill(poly, resolution)
+	if len(indexes) == 0 {
+		indexes = pointToH3(resolution, geojson.NewPoint(rect.Center()))
+	}
+	return indexes
+}
+
+func circleToH3(resolution int, circle *geojson.Circle) ([]h3.H3Index, error) {
+	poly := h3.GeoPolygon{}
+	poly.Geofence = make([]h3.GeoCoord, 0, circle.NumPoints())
+	polygon, ok := circle.Primative().(*geojson.Polygon)
+	if !ok {
+		return nil, fmt.Errorf("expected geojson.Polygon, got %T", polygon)
+	}
+	for i := 0; i < polygon.Base().Exterior.NumPoints(); i++ {
+		point := polygon.Base().Exterior.PointAt(i)
+		poly.Geofence = append(poly.Geofence, h3.GeoCoord{
+			Latitude:  point.Y,
+			Longitude: point.X,
+		})
+	}
+	indexes := h3.Polyfill(poly, resolution)
+	if len(indexes) == 0 {
+		indexes = pointToH3(resolution, geojson.NewPoint(circle.Center()))
+	}
+	return indexes, nil
 }
 
 func polygonToH3(resolution int, polygon *geojson.Polygon) ([]h3.H3Index, error) {

@@ -1,9 +1,17 @@
 # go-geojson2h3
 
-[![Coverage Status](https://coveralls.io/repos/github/mmadfox/go-geojson2h3/badge.svg?branch=main)](https://coveralls.io/github/mmadfox/go-geojson2h3?branch=main&s=1)
+[![Coverage Status](https://coveralls.io/repos/github/mmadfox/go-geojson2h3/badge.svg?branch=main)](https://coveralls.io/github/mmadfox/go-geojson2h3?branch=main&s=2)
 [![Documentation](https://godoc.org/github.com/mmadfox/go-geojson2h3?status.svg)](https://pkg.go.dev/github.com/mmadfox/go-geojson2h3)
 
-The `geojson2h3` library includes a set of utilities for conversion between GeoJSON objects (Point,MultiPoint,LineString,MultiLineString,Polygon,MultiPolygon,GeometryCollection,Feature,FeatureCollection) and [H3 hexagon indexes](https://h3geo.org), 
+The `geojson2h3` library includes a set of utilities for conversion between GeoJSON Objects: 
+* Point, MultiPoint,
+* LineString, MultiLineString
+* Polygon,MultiPolygon
+* GeometryCollection
+* Feature,FeatureCollection
+* Circle
+
+and [H3 hexagon indexes](https://h3geo.org), 
 using:
     [H3-GO](https://github.com/uber/h3-go) and
     [GeoJSON](https://github.com/tidwall/geojson)

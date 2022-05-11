@@ -21,6 +21,85 @@ func init() {
 	}
 }
 
+func TestRectToH3(t *testing.T) {
+	res := 7
+	rect := geojson.NewRect(geometry.Rect{
+		// lon, lat
+		Min: geometry.Point{X: -74.060569, Y: 40.822615},
+		Max: geometry.Point{X: -73.969274, Y: 40.754495},
+	})
+	indexes, err := ToH3(res, rect)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if debug {
+		filename := fmt.Sprintf("tmp/rect.s1.res:%d.json", res)
+		writeIndexesToFile(t, filename, indexes)
+	}
+	if want, have := 12, len(indexes); want != have {
+		t.Fatalf("resolution: %d, have %d, want %d", res, have, want)
+	}
+}
+
+func TestObjectAsNil(t *testing.T) {
+	_, err := ToH3(7, nil)
+	if err == nil {
+		t.Fatalf("have nil, expected error")
+	}
+}
+
+func TestInvalidFeatureCollection(t *testing.T) {
+	fc := geojson.NewFeatureCollection([]geojson.Object{
+		geojson.NewSimplePoint(geometry.Point{X: -74.143609, Y: 40.751389}),
+	})
+	_, err := ToH3(7, fc)
+	if err == nil {
+		t.Fatalf("have nil, expected error")
+	}
+}
+
+func TestUnknownGeoJSONObject(t *testing.T) {
+	type someGeom struct {
+		*geojson.Point
+	}
+	_, err := ToH3(7, someGeom{geojson.NewPoint(geometry.Point{X: -74.143609, Y: 40.751389})})
+	if err == nil {
+		t.Fatalf("have nil, expected error")
+	}
+}
+
+func TestCircleS1ToH3(t *testing.T) {
+	res := 7
+	circle := geojson.NewCircle(geometry.Point{X: -74.143609, Y: 40.751389}, 5000, 16)
+	indexes, err := ToH3(res, circle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if debug {
+		filename := fmt.Sprintf("tmp/circle.s1.res:%d.json", res)
+		writeIndexesToFile(t, filename, indexes)
+	}
+	if want, have := 15, len(indexes); want != have {
+		t.Fatalf("resolution: %d, have %d, want %d", res, have, want)
+	}
+}
+
+func TestSimplePointToH3(t *testing.T) {
+	res := 7
+	simplePoint := geojson.NewSimplePoint(geometry.Point{X: -74.143609, Y: 40.751389})
+	indexes, err := ToH3(res, simplePoint)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if debug {
+		filename := fmt.Sprintf("tmp/simple_point.s1.res:%d.json", res)
+		writeIndexesToFile(t, filename, indexes)
+	}
+	if want, have := 1, len(indexes); want != have {
+		t.Fatalf("resolution: %d, have %d, want %d", res, have, want)
+	}
+}
+
 func TestGeometryCollectionS1ToH3(t *testing.T) {
 	res := 7
 	points := []geometry.Point{
