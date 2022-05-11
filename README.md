@@ -2,6 +2,7 @@
 
 [![Coverage Status](https://coveralls.io/repos/github/mmadfox/go-geojson2h3/badge.svg?branch=main&n=1)](https://coveralls.io/github/mmadfox/go-geojson2h3?branch=main&n=1)
 [![Documentation](https://godoc.org/github.com/mmadfox/go-geojson2h3?status.svg)](https://pkg.go.dev/github.com/mmadfox/go-geojson2h3)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mmadfox/go-geojson2h3)](https://goreportcard.com/report/github.com/mmadfox/go-geojson2h3)
 
 The `geojson2h3` library includes a set of utilities for conversion between GeoJSON Objects: 
 * Point, MultiPoint,
