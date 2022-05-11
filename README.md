@@ -32,6 +32,15 @@ ToFeatureCollection(indexes []h3.H3Index) (*geojson.FeatureCollection, error)
 ```
 
 ## Examples
+
+* [Point, MultiPoint](examples/point.go)
+* [LineString, MultiLineString](examples/line.go)
+* [Polygon,MultiPolygon](examples/polygon.go)
+* [GeometryCollection](examples/collection.go)
+* [Feature,FeatureCollection](examples/feature.go)
+* [Circle](examples/circle.go)
+* [Rect](examples/rect.go)
+
 ```go
 package main
 
@@ -66,3 +75,6 @@ func main() {
 	fmt.Println(featureCollection.JSON())
 }
 ```
+
+## Contributing
+Pull requests and [Github issues](https://github.com/mmadfox/go-geojson2h3/issues) are welcome. Please include tests for new work, and keep the library test coverage at 90-100%. 
